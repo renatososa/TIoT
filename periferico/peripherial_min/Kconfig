@@ -1,0 +1,17 @@
+source "Kconfig.zephyr"
+
+menu "EMG experiment configuration"
+
+config EMG_PREEXPERIMENT
+	bool "Automatic BLE saturation preexperiment"
+	default n
+	help
+	  Runs the seven payload sizes automatically with blocking notifications.
+
+config EMG_POSTEXPERIMENT
+	bool "Unified post-preexperiment profile sequence"
+	default n
+	help
+	  Runs the seven selected EMG profiles and four 960-byte stress profiles.
+
+endmenu

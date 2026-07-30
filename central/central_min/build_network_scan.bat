@@ -1,0 +1,35 @@
+@echo off
+call "%~dp0_zephyr_env.bat"
+if errorlevel 1 exit /b 1
+
+set "SCAN_BUILD_DIR=%APP_DIR%\build\network_scan"
+set "SCAN_CONF=%APP_DIR%\network_scan.conf"
+
+if exist "%SCAN_BUILD_DIR%" rmdir /s /q "%SCAN_BUILD_DIR%"
+
+set "APP_DIR_CMAKE=%APP_DIR:\=/%"
+set "SCAN_BUILD_DIR_CMAKE=%SCAN_BUILD_DIR:\=/%"
+set "SCAN_CONF_CMAKE=%SCAN_CONF:\=/%"
+set "ZEPHYR_BASE_CMAKE=%ZEPHYR_BASE:\=/%"
+set "WEST_PYTHON_CMAKE=%WEST_PYTHON:\=/%"
+set "NINJA_EXE_CMAKE=%NINJA_EXE:\=/%"
+set "ZEPHYR_SDK_INSTALL_DIR_CMAKE=%ZEPHYR_SDK_INSTALL_DIR:\=/%"
+
+echo [INFO] Building central BLE environment survey
+
+"%CMAKE_EXE%" -GNinja ^
+  -B "%SCAN_BUILD_DIR_CMAKE%" ^
+  -S "%APP_DIR_CMAKE%" ^
+  -DBOARD=%BOARD% ^
+  -DSNIPPET="%SNIPPETS%" ^
+  -DZEPHYR_BASE="%ZEPHYR_BASE_CMAKE%" ^
+  -DCMAKE_MAKE_PROGRAM="%NINJA_EXE_CMAKE%" ^
+  -DWEST_PYTHON="%WEST_PYTHON_CMAKE%" ^
+  -DZEPHYR_TOOLCHAIN_VARIANT=%ZEPHYR_TOOLCHAIN_VARIANT% ^
+  -DZEPHYR_SDK_INSTALL_DIR="%ZEPHYR_SDK_INSTALL_DIR_CMAKE%" ^
+  -DEXTRA_CONF_FILE="%SCAN_CONF_CMAKE%"
+set "ERR=%ERRORLEVEL%"
+if errorlevel 1 exit /b %ERR%
+
+"%CMAKE_EXE%" --build "%SCAN_BUILD_DIR_CMAKE%"
+exit /b %ERRORLEVEL%

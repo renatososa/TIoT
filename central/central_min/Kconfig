@@ -1,0 +1,13 @@
+source "Kconfig.zephyr"
+
+config EMG_PREEXPERIMENT
+	bool "Automatic BLE saturation preexperiment"
+	default n
+
+config EMG_POSTEXPERIMENT
+	bool "Unified post-preexperiment profile sequence"
+	default n
+
+config EMG_NETWORK_SCAN
+	bool "BLE environment survey"
+	default n

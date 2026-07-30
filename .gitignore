@@ -1,0 +1,21 @@
+# Salidas generadas por Zephyr y nRF Connect SDK
+**/build/
+
+# Cachés y archivos temporales
+**/.cache/
+*.log
+*.tmp
+
+# Configuración local de editores
+.vscode/
+.idea/
+
+# Python
+__pycache__/
+*.py[cod]
+
+# Archivos del sistema operativo y copias locales
+.DS_Store
+Thumbs.db
+*.bak
+*~

@@ -1,0 +1,78 @@
+ESP-ROM:esp32s3-20210327
+Build:Mar 27 2021
+rst:0x1 (POWERON),boot:0x8 (SPI_FAST_FLASH_BOOT)
+SPIWP:0xee
+mode:DIO, clock div:1
+load:0x3fc98340,len:0x4b44
+load:0x40374000,len:0x1432c
+load:0x50000000,len:0x24
+SHA-256 comparison failed:
+Calculated: 4a5d745845fb4a1146067388ac8376b600c0b96046d76068164d197541129d3f
+Expected: 0000000020710000000000000000000000000000000000000000000000000000
+Attempting to boot anyway...
+entry 0x40382228
+I (soc_init): ESP Simple boot
+I (soc_init): compile time Jul 30 2026 01:13:34
+W (soc_init): Unicore bootloader
+I (soc_init): chip revision: v0.2
+I (flash_init): Boot SPI Speed : 80MHz
+I (flash_init): SPI Mode       : DIO
+I (flash_init): SPI Flash Size : 16MB
+I (boot): DRAM	: lma=00000020h vma=3fc98340h size=04b44h ( 19268)
+I (boot): IRAM	: lma=00004b6ch vma=40374000h size=1432ch ( 82732)
+I (boot): RTC_DATA	: lma=00018ea0h vma=50000000h size=00024h (    36)
+I (boot): IROM	: lma=00020000h vma=42000000h size=68a40h (428608)
+I (boot): DROM	: lma=00090000h vma=3c070000h size=120c4h ( 73924)
+I (boot): libc heap size 127 kB.
+I (cache): Instruction cache: size 16KB, 8Ways, cache line size 32Byte
+I (spi_flash): detected chip: boya
+I (spi_flash): flash io: dio
+I (octal_psram): vendor id    : 0x0d (AP)
+I (octal_psram): dev id       : 0x02 (generation 3)
+I (octal_psram): density      : 0x03 (64 Mbit)
+I (octal_psram): good-die     : 0x01 (Pass)
+I (octal_psram): Latency      : 0x01 (Fixed)
+I (octal_psram): VCC          : 0x01 (3V)
+I (octal_psram): SRF          : 0x01 (Fast Refresh)
+I (octal_psram): BurstType    : 0x01 (Hybrid Wrap)
+I (octal_psram): BurstLen     : 0x01 (32 Byte)
+I (octal_psram): Readlatency  : 0x02 (10 cycles@Fixed)
+I (octal_psram): DriveStrength: 0x00 (1/1)
+I (esp_psram): Found 8MB PSRAM device
+I (esp_psram): Speed: 40MHz
+*** Booting Zephyr OS build v4.4.0-5666-ga3e41914e33e ***
+Booting central BLE and Wi-Fi environment survey
+PROFILE,radio_environment_scan,1
+SETTING,ble_duration_s,60
+SETTING,wifi_duration_s,60
+SETTING,start_delay_s,5
+SETTING,scan_type,active
+SETTING,scan_interval_units,96
+SETTING,scan_window_units,48
+SETTING,ble_scan_interval_ms,60
+SETTING,ble_scan_window_ms,30
+SETTING,duplicate_filter,disabled
+SETTING,wifi_scan_type,active
+SETTING,wifi_band,2.4GHz
+SETTING,ble_max_unique_devices,128
+SETTING,wifi_max_unique_networks,64
+Bluetooth initialized
+BLE survey starts in 5 seconds
+BLE survey started
+BLE survey stopped
+Wi-Fi survey started
+Wi-Fi survey stopped
+CSV_BLE,event,address,address_type,name,observations,rssi_min_dbm,rssi_mean_dbm,rssi_max_dbm,first_seen_ms,last_seen_ms,advertising_type_mask
+BLE,02:00:00:00:00:01,random,Xiao_GATT_Min,525,-81,-39.78,-37,69,59989,0x00000011
+BLE,02:00:00:00:00:02,random,<unnamed>,263,-82,-50.56,-44,376,60000,0x00000008
+BLE,02:00:00:00:00:03,random,<unnamed>,543,-82,-54.06,-46,74,59871,0x00000011
+BLE,02:00:00:00:00:04,public,dispositivo_vecino,361,-81,-58.03,-52,8,59822,0x00000011
+BLE,02:00:00:00:00:05,random,<unnamed>,11,-86,-71.90,-67,3705,53826,0x00000008
+SUMMARY_BLE,unique_devices,5
+SUMMARY_BLE,untracked_reports,0
+CSV_WIFI,event,bssid,ssid,band,channel,security,observations,rssi_min_dbm,rssi_mean_dbm,rssi_max_dbm,first_seen_ms,last_seen_ms
+WIFI,02:00:00:00:01:01,red_entorno_2.4,2.4GHz,4,UNKNOWN,16,-41,-33.31,-28,2416,60453
+SUMMARY_WIFI,unique_networks,1
+SUMMARY_WIFI,completed_scans,18
+SUMMARY_WIFI,untracked_results,0
+Session complete

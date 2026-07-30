@@ -1,0 +1,19 @@
+/ {
+	zephyr,user {
+		sync-gpios = <&gpio0 28 GPIO_ACTIVE_HIGH>;
+		acquisition-marker-gpios = <&gpio0 2 GPIO_ACTIVE_HIGH>;
+		transmitter-marker-gpios = <&gpio0 3 GPIO_ACTIVE_HIGH>;
+		advertising-marker-gpios = <&gpio0 29 GPIO_ACTIVE_HIGH>;
+		connected-marker-gpios = <&gpio0 4 GPIO_ACTIVE_HIGH>;
+		profile-marker-gpios = <&gpio0 5 GPIO_ACTIVE_HIGH>;
+	};
+
+	chosen {
+		zephyr,console = &board_cdc_acm_uart;
+		zephyr,shell-uart = &board_cdc_acm_uart;
+	};
+};
+
+&i2c1 {
+	status = "disabled";
+};
