@@ -37,28 +37,24 @@ notificaciones en vuelo     1
 
 ### Significado de “envío por saturación”
 
-En este informe, saturación no significa interferir ni llenar la radio con
-datos inválidos. Significa que no existe un temporizador de adquisición: cada
-vez que Zephyr ejecuta el callback de la notificación, el XIAO prepara
-inmediatamente el paquete siguiente.
+En este informe, saturación describe una secuencia sin temporizador de
+adquisición: cada vez que Zephyr ejecuta el callback de la notificación, el XIAO
+prepara inmediatamente el paquete siguiente.
 
 ```text
 encolar notificación → esperar callback ATT → encolar notificación siguiente
 ```
 
 Así se mide la máxima cantidad de paquetes completos por segundo que esta
-implementación puede servir para un payload determinado. No hay una cola de
-ventanas creciendo porque la generación está deliberadamente condicionada por
-BLE. La capacidad obtenida actúa como techo para decidir si una generación
-periódica posterior puede ser sostenible.
+implementación puede servir para un payload determinado. La generación queda
+condicionada por BLE y la capacidad obtenida actúa como techo para evaluar la
+etapa periódica.
 
-Es importante corregir la interpretación de ese callback. En la configuración
-compilada, `CONFIG_BT_ATT_SENT_CB_AFTER_TX` está deshabilitada. Por lo tanto,
-el callback significa que ATT entregó los datos al controlador, no que el
-paquete ya fue transmitido por radio ni recibido por el central. La latencia
-extremo a extremo continúa siendo válida porque el central registra la
-recepción; lo que no debe llamarse tiempo de radio es el intervalo entre dos
-callbacks del periférico.
+En la configuración compilada, `CONFIG_BT_ATT_SENT_CB_AFTER_TX` está
+deshabilitada. El callback registra la entrega de los datos desde ATT al
+controlador. La latencia extremo a extremo se obtiene de la recepción registrada
+por el central. El intervalo entre callbacks caracteriza la alimentación del
+controlador desde el host.
 
 | Payload | Fragmentos | Paquetes recibidos | Capacidad | Throughput útil | Latencia transporte P95 |
 | ---: | ---: | ---: | ---: | ---: | ---: |

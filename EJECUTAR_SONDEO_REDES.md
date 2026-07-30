@@ -76,20 +76,17 @@ identidades se almacenaron y si se superó la capacidad fija.
 
 ## Interpretación y limitaciones
 
-- RSSI describe potencia recibida, no ocupación temporal ni interferencia.
+- RSSI describe la potencia recibida.
 - Un dispositivo BLE puede usar direcciones privadas rotatorias y aparecer como
   más de una identidad.
-- Los reportes BLE de advertising y scan response cuentan como observaciones;
-  no equivalen necesariamente a eventos físicos independientes.
-- El escaneo BLE del controlador recorre los canales primarios de advertising,
-  pero esta interfaz no informa en qué canal se recibió cada reporte.
+- Las observaciones BLE contabilizan reportes de advertising y scan response.
+- El escaneo BLE del controlador recorre los canales primarios de advertising y
+  entrega resultados agregados.
 - Una red Wi-Fi con varios puntos de acceso aparece una vez por BSSID, aunque
   todos compartan el mismo SSID.
-- El ESP32-S3 sondea Wi-Fi en 2,4 GHz; las redes de 5 o 6 GHz no son visibles
-  para este hardware.
+- El ESP32-S3 sondea Wi-Fi en 2,4 GHz.
 - Un SSID oculto se registra como `<hidden>`.
-- El sondeo Wi-Fi registra puntos de acceso y canal, pero no mide utilización de
-  canal, retransmisiones ni tráfico de estaciones.
+- El sondeo Wi-Fi registra puntos de acceso y canal.
 
-Por esas razones, el archivo caracteriza el entorno radioeléctrico visible y
-ayuda a reproducirlo, pero no constituye un analizador de espectro.
+El archivo caracteriza el entorno radioeléctrico visible y facilita su
+reproducción.

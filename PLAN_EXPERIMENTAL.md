@@ -6,7 +6,8 @@
 de datos tipo EMG y al consumo del periférico?
 
 La producción de muestras es periódica e independiente de BLE. Si el enlace se
-retrasa, las ventanas esperan en una cola finita; no se ralentiza el sensor.
+retrasa, las ventanas esperan en una cola finita mientras el sensor conserva su
+frecuencia.
 
 ## 2. Etapas
 
@@ -24,17 +25,16 @@ log conserva identidades, canales Wi-Fi, número de observaciones y RSSI
 mínimo/medio/máximo. Entre sondeo y experimento se cambia únicamente el
 firmware; el perfil de redes y el log del experimento se guardan juntos.
 
-Este sondeo caracteriza emisores visibles, no ocupación de canal ni
-interferencia. Se utiliza como descriptor del entorno y no como explicación
-causal automática de pérdidas.
+Este sondeo caracteriza los emisores visibles y se utiliza como descriptor del
+entorno.
 
 ### 2.1 Preexperimento de capacidad
 
 El preexperimento transmite tan rápido como la pila BLE lo permite y caracteriza
 payloads de 15, 30, 60, 120, 240, 480 y 960 bytes. Sirve para estimar el techo de
-servicio, no representa una adquisición EMG periódica.
+servicio de la comunicación.
 
-Este firmware es independiente y **no incorpora instrumentación de consumo**.
+La instrumentación de consumo se incorpora en el experimento periódico.
 
 ### 2.2 Experimento periódico unificado
 

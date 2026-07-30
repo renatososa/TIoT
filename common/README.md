@@ -72,9 +72,8 @@ datos útiles                                        = 212 B
 
 ATT admite valores de atributo de hasta 512 B y por eso las implementaciones
 suelen permitir un ATT MTU máximo de 517 B: algunos tipos de PDU necesitan
-cinco bytes además del valor. Ese máximo lógico no implica que todo se transmita
-en una sola PDU de radio. Con Link Layer limitado a 251 B, una PDU ATT mayor de
-247 B requiere segmentación y reensamblado L2CAP.
+cinco bytes además del valor. Con Link Layer limitado a 251 B, una PDU ATT mayor
+de 247 B requiere segmentación y reensamblado L2CAP.
 
 La negociación usa el menor MTU anunciado por los dos extremos. Por tanto, 247
 solo es efectivo si XIAO y ESP32-S3 lo soportan y completan el intercambio; el

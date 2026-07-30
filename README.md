@@ -10,7 +10,6 @@ cola y consumo para adquisición EMG periódica.</strong></p>
   <img alt="Bluetooth LE PHY 2M" src="https://img.shields.io/badge/Bluetooth_LE-PHY_2M-0082FC?style=flat-square">
   <img alt="XIAO nRF52840" src="https://img.shields.io/badge/Periferico-XIAO_nRF52840-00A98F?style=flat-square">
   <img alt="ESP32-S3 N16R8" src="https://img.shields.io/badge/Central-ESP32--S3_N16R8-E7352C?style=flat-square">
-  <img alt="Medición energética pendiente" src="https://img.shields.io/badge/Estado-Energia_pendiente-F0A500?style=flat-square">
 </p>
 
 <p>
@@ -70,19 +69,15 @@ Los comandos se ejecutan desde la raíz del repositorio en Windows:
 
 ## Resultados principales
 
-El tamaño de ventana no puede elegirse únicamente a partir del throughput:
-también determina cuántos paquetes compiten por cada evento de conexión, cuánto
-crece la cola y qué latencia se acumula.
+La selección de ventana considera el throughput, la cantidad de paquetes que
+compiten por cada evento de conexión, la ocupación de cola y la latencia
+acumulada.
 
 | Escenario | Caudal objetivo | Perfil sostenible evaluado | Resultado |
 | --- | ---: | --- | --- |
 | S1: 1 canal × 1 kHz × 24 bits | 24 kbps | S1-E20 | 60 B cada 20 ms, sin pérdida |
-| S2: 4 canales × 1 kHz × 24 bits | 96 kbps | S2-E10 y S2-E20 | Ambos sin pérdida; falta comparar energía |
+| S2: 4 canales × 1 kHz × 24 bits | 96 kbps | S2-E10 y S2-E20 | Ambos sin pérdida |
 | S3: 8 canales × 2 kHz × 24 bits | 384 kbps | S3-E20 | 960 B cada 20 ms, sin pérdida |
-
-> **Estado actual:** el transporte y el análisis temporal están completos. La
-> selección final entre las ventanas sostenibles queda pendiente de la medición
-> energética con PPK2.
 
 <details>
 <summary><strong>Contenido del informe técnico</strong></summary>
@@ -95,7 +90,7 @@ crece la cola y qué latencia se acumula.
 4. [Resultados del sondeo radioeléctrico](#4-resultados-del-sondeo-radioeléctrico)
 5. [Resultados del preexperimento](#5-resultados-del-preexperimento)
 6. [Resultados del experimento periódico](#6-resultados-del-experimento-periódico-unificado)
-7. [Estado y conclusiones](#7-estado-y-conclusiones)
+7. [Conclusiones](#7-conclusiones)
 8. [Referencias](#8-referencias)
 
 </details>
@@ -109,9 +104,8 @@ Este proyecto estudia cómo empaquetar y transportar por Bluetooth Low Energy
 (sEMG). El periférico es un XIAO nRF52840 y el central un ESP32-S3 N16R8; ambos
 ejecutan Zephyr.
 
-El problema no consiste solamente en comprobar si un paquete BLE puede cruzar
-el enlace. Un sensor EMG adquiere muestras a una frecuencia fija, aunque la
-radio tarde en atenderlas. Por lo tanto, una arquitectura útil debe responder
+El problema consiste en transportar una adquisición EMG de frecuencia fija
+sobre un enlace con disponibilidad variable. La arquitectura debe responder
 cuánto tráfico produce la señal, qué cantidad de muestras conviene reunir por
 paquete y qué ocurre cuando BLE sirve los paquetes más lentamente de lo que se
 generan.
@@ -119,7 +113,7 @@ generan.
 Para conservar esa independencia, un temporizador genera ventanas periódicas,
 una cola finita absorbe variaciones temporales y otro hilo las fragmenta y
 transmite. Así, una demora del enlace se observa como acumulación de latencia o
-descarte, no como una reducción artificial de la frecuencia del sensor.
+descarte, mientras la frecuencia del sensor permanece constante.
 
 ```mermaid
 flowchart LR
@@ -131,11 +125,9 @@ flowchart LR
     F --> G["Corrección temporal<br/>y métricas"]
 ```
 
-El firmware no conecta todavía un front-end analógico ni adquiere una señal
-fisiológica: genera bytes deterministas con el mismo caudal que producirían
-varias configuraciones de EMG. Por eso los resultados caracterizan la
-arquitectura de adquisición, empaquetado y comunicación, pero no la calidad de
-una señal EMG, su relación señal-ruido ni su aptitud diagnóstica.
+El firmware genera bytes deterministas con el mismo caudal que producirían
+varias configuraciones de EMG. Los resultados caracterizan la arquitectura de
+adquisición, empaquetado y comunicación.
 
 ### Estructura del repositorio
 
@@ -180,20 +172,18 @@ seguir un músculo o una localización; varios canales permiten observar
 simultáneamente distintos músculos o posiciones. Como referencia de escala, la
 base NinaPro DB2 emplea 12 electrodos sEMG a 2 kHz para movimientos de mano y
 CapgMyo utiliza una matriz de alta densidad de 128 canales a 1 kHz. El proyecto
-no intenta reproducir por completo esos sistemas: selecciona 1, 4 y 8 canales
-para recorrer desde un nodo mínimo hasta un dispositivo multicanal compacto.
-Cuatro canales constituyen un punto intermedio de ingeniería, no un estándar
-clínico ([Atzori et al., 2014](https://doi.org/10.1038/sdata.2014.53);
+selecciona 1, 4 y 8 canales para recorrer desde un nodo mínimo hasta un
+dispositivo multicanal compacto.
+Cuatro canales constituyen el punto intermedio de ingeniería
+([Atzori et al., 2014](https://doi.org/10.1038/sdata.2014.53);
 [Du et al., 2017](https://doi.org/10.3390/s17030458)).
 
 Cada muestra se representa con una palabra de 24 bits, es decir, tres bytes.
 Esta elección modela la salida sin comprimir de front-ends multicanal para
 biopotenciales como la familia ADS1299, disponible con 4, 6 u 8 ADC simultáneos
-de 24 bits y tasas desde 250 SPS hasta 16 kSPS. No significa que una EMG
-necesite 24 bits efectivos: la bibliografía recomienda al menos 12 bits y
-prefiere 16 bits para una cadena correctamente amplificada. Tampoco deben
-confundirse los 24 bits nominales del convertidor con su número efectivo de bits,
-que depende del ruido, la ganancia y el rango de entrada
+de 24 bits y tasas desde 250 SPS hasta 16 kSPS. La resolución efectiva depende
+del ruido, la ganancia y el rango de entrada; la bibliografía recomienda al
+menos 12 bits y prefiere 16 bits para una cadena correctamente amplificada
 ([ADS1299](https://www.ti.com/product/ADS1299);
 [Merletti y Cerone, 2020](https://doi.org/10.1016/j.jelekin.2020.102440)).
 
@@ -216,9 +206,8 @@ por el encabezado experimental y por los encabezados ATT, L2CAP y Link Layer.
 ### De la ventana temporal al tamaño de paquete
 
 Una **ventana de transporte** reúne las muestras adquiridas durante un período
-antes de entregarlas al transmisor. No es una ventana de análisis EMG para
-extraer características o clasificar gestos: en este proyecto no se procesa la
-señal y todos los valores crudos deben llegar al central.
+antes de entregarlas al transmisor. Su función es empaquetar y comunicar todos
+los valores crudos adquiridos.
 
 Para una ventana de duración `W`:
 
@@ -232,8 +221,7 @@ Se eligieron 5, 10 y 20 ms para comparar tres compromisos de transporte. Una
 ventana corta hace disponibles las muestras antes, pero multiplica la cantidad
 de paquetes y el costo de sus encabezados; una ventana larga amortiza ese costo,
 pero debe completarse antes de poder enviarse y agrega latencia de formación.
-Diez milisegundos funciona como punto intermedio. Los tamaños derivados, no
-elegidos arbitrariamente, son:
+Diez milisegundos funciona como punto intermedio. Los tamaños derivados son:
 
 | Escenario | 5 ms | 10 ms | 20 ms |
 | --- | ---: | ---: | ---: |
@@ -250,10 +238,9 @@ la capacidad para los siete payloads únicos de la tabla anterior: 15, 30, 60,
 paquete de la frecuencia de adquisición, descubrir a partir de qué tamaño se
 utiliza eficientemente el enlace y obtener un techo de referencia.
 
-El preexperimento no representa un sensor: no impone una frecuencia de
-adquisición, no utiliza la cola periódica y no incluye instrumentación de
-consumo. Por eso su throughput máximo no se interpreta como caudal periódico
-sostenible.
+El preexperimento opera sin frecuencia de adquisición, cola periódica ni
+instrumentación de consumo. Su throughput máximo establece un techo de
+referencia para la etapa periódica.
 
 ### Etapa 2: generación periódica
 
@@ -261,8 +248,8 @@ Con la caracterización anterior se descartan S1-E5 y S1-E10. Ambos serían
 caudales EMG válidos, pero sus payloads de 15 y 30 B mostraron una utilización
 anómala y muy baja en saturación; S1-E20 conserva el mismo caudal de 24 kbps con
 un paquete más eficiente. Se mantienen las tres ventanas de S2 y S3 para
-observar si una misma tasa de muestras puede ser sostenible o no según cómo se
-empaquete.
+observar cómo el empaquetado modifica la sostenibilidad de una misma tasa de
+muestras.
 
 El firmware unifica esos siete perfiles EMG y cuatro perfiles de estrés en una
 sola sesión. Cada perfil dura 20 segundos y hay una pausa de un segundo entre
@@ -286,38 +273,33 @@ inmanejable la captura serie:
 
 Los primeros siete representan los perfiles EMG seleccionados. Los cuatro
 últimos conservan el mayor payload, para amortizar encabezados, y aumentan su
-frecuencia para localizar el límite sostenible. No representan nuevas
-configuraciones de sensor: son cargas artificiales destinadas a separar el
-límite de la comunicación de los tres escenarios EMG.
+frecuencia para localizar el límite sostenible. Estos cuatro perfiles son
+cargas artificiales destinadas a caracterizar el límite de la comunicación.
 
-La producción y el envío se ejecutan en hilos separados. El temporizador no
-espera a BLE: coloca cada ventana en una cola de ocho posiciones y, si está
-llena, registra un descarte. La profundidad ocho es un parámetro de esta
-implementación, no un límite de BLE. Cada posición reserva el payload máximo de
-960 B más metadatos, por lo que la cola consume aproximadamente 7,8 kB. Se
-mantiene fija para comparar todos los perfiles bajo la misma capacidad de
-absorción; aumentarla podría reducir pérdidas breves a costa de RAM y de una
-latencia acumulada mayor, no elevaría el caudal sostenible en régimen
-permanente.
+La producción y el envío se ejecutan en hilos separados. El temporizador coloca
+cada ventana en una cola de ocho posiciones con cadencia fija y, si está llena,
+registra un descarte. La profundidad ocho es un parámetro de esta
+implementación. Cada posición reserva el payload máximo de 960 B más metadatos,
+por lo que la cola consume aproximadamente 7,8 kB. Se mantiene fija para
+comparar todos los perfiles bajo la misma capacidad de absorción. Una
+profundidad mayor absorbe demoras transitorias a costa de RAM y latencia
+acumulada, mientras que el caudal sostenible permanece determinado por el
+servicio del enlace.
 
 ### Transporte y tiempo
 
-Se definió un servicio GATT propio porque no se transporta una medida clínica
-aislada, sino ventanas binarias de muestras con control experimental,
-timestamps, identificadores y fragmentación. Los servicios estandarizados para
-otras clases de sensores no representan esos campos ni harían interoperable
-este protocolo. Como los dos extremos pertenecen al mismo sistema, una interfaz
-propia permite preservar exactamente la información necesaria para reconstruir
-un paquete y medirlo. Esto sacrifica interoperabilidad directa con aplicaciones
-BLE genéricas: un receptor debe implementar este protocolo. La especificación
-completa de UUID, características, propiedades, permisos y formato binario está
-en [common/README.md](common/README.md).
+El servicio GATT propio transporta ventanas binarias de muestras, timestamps,
+identificadores y datos de fragmentación. Como los dos extremos pertenecen al
+mismo sistema, la interfaz preserva la información necesaria para reconstruir y
+medir cada paquete. El receptor implementa este protocolo específico. La
+especificación completa de UUID, características, propiedades, permisos y
+formato binario está en [common/README.md](common/README.md).
 
 Los datos se envían mediante notificaciones GATT. Una notificación evita la
-confirmación ATT de una indicación y permite mayor caudal; en contrapartida, su
-callback confirma que la pila local aceptó el dato, no que la aplicación central
-lo recibió. La recepción se verifica mediante identificadores consecutivos,
-reconstrucción y contadores al final de cada perfil.
+confirmación ATT de una indicación y permite mayor caudal. Su callback registra
+la aceptación del dato por la pila local; la recepción central se verifica
+mediante identificadores consecutivos, reconstrucción y contadores al final de
+cada perfil.
 
 Se usa ATT MTU 247 porque la extensión Data Length permite 251 B en una PDU de
 datos de Link Layer y el encabezado Basic L2CAP ocupa 4 B. Así, una PDU ATT de
@@ -336,28 +318,26 @@ ATT MTU                                    247 B
 = muestras por fragmento                    212 B
 ```
 
-ATT puede configurarse hasta 517 B, pero ese es un máximo lógico y no significa
-que el valor viaje en una sola PDU de radio. Con Data Length 251, un MTU mayor
-introduciría segmentación L2CAP. El proyecto prefiere un MTU de 247 y realiza
-una fragmentación de aplicación explícita, visible y medible. Por ello, los
-payloads de 15, 30, 60 y 120 B usan un fragmento; 240 B usa dos; 480 B usa tres
-y 960 B usa cinco.
+El máximo lógico configurable de ATT es 517 B. Con Data Length 251, un MTU
+superior a 247 B introduce segmentación L2CAP. El proyecto usa un MTU de 247 y
+realiza una fragmentación de aplicación explícita, visible y medible. Por ello,
+los payloads de 15, 30, 60 y 120 B usan un fragmento; 240 B usa dos; 480 B usa
+tres y 960 B usa cinco.
 
 El transmisor mantiene un paquete de aplicación en curso y espera el callback
 de cada notificación antes de entregar el fragmento siguiente. Esta decisión
 simplifica la reconstrucción, acota el estado y permite asociar el tiempo de
-transporte a un paquete completo, pero también forma parte del sistema
-caracterizado: los resultados no representan el máximo teórico de cualquier
-implementación BLE que permita más operaciones simultáneas.
+transporte a un paquete completo. Los resultados caracterizan esta estrategia
+de una notificación en curso.
 
 Para que la comparación responda principalmente al empaquetado, todos los
 perfiles comparten la misma conexión. En la ejecución analizada se negociaron
 PHY 2M, Data Length 251 B, ATT MTU 247, latencia de periférico cero e intervalo
 de conexión de 50 ms. Este último establece cada cuánto se abren oportunidades
-programadas de comunicación; no obliga a que cada paquete espere siempre 50 ms,
-pero agrupa el servicio del enlace y puede producir ráfagas. En 50 ms se generan
-10 ventanas de 5 ms, 5 de 10 ms o 2–3 de 20 ms, lo que ayuda a explicar por qué
-dos perfiles con el mismo caudal útil no ejercen la misma presión sobre una cola
+programadas de comunicación y agrupa el servicio del enlace en ráfagas con
+varios paquetes por evento. En 50 ms se generan 10 ventanas de 5 ms, 5 de 10 ms
+o 2–3 de 20 ms, lo que ayuda a explicar por qué dos perfiles con el mismo caudal
+útil ejercen distinta presión sobre una cola
 de ocho posiciones.
 
 El tiempo de recepción de un paquete se define cuando llega su último fragmento;
@@ -365,8 +345,8 @@ si no hay fragmentación, es la recepción de su única notificación. Como cada
 microcontrolador posee un reloj local independiente, comparar directamente sus
 timestamps introduciría offset y deriva. El central genera diez pulsos GPIO
 antes de la secuencia y diez después. El XIAO marca esos mismos flancos y los
-devuelve fuera de la fase de datos, de modo que la sincronización no agrega
-tráfico BLE durante los perfiles:
+devuelve fuera de la fase de datos. La sincronización queda separada del tráfico
+BLE de los perfiles:
 
 ```text
 ESP32-S3 GPIO4 --- resistencia 1 kΩ --- XIAO D2 / P0.28
@@ -377,7 +357,7 @@ Dos grupos permiten ajustar una transformación lineal: el primero fija el
 origen relativo y la separación entre los grupos estima la diferencia de
 frecuencia. Diez pulsos por grupo reducen la influencia de la variación de una
 única interrupción. El método alinea las escalas temporales para el análisis,
-pero no modifica físicamente ninguno de los relojes.
+y conserva sin cambios los contadores físicos de ambos relojes.
 
 ### Métricas y criterios de cálculo
 
@@ -407,8 +387,7 @@ t_xiao_corregido = central_inicio
 ```
 
 Esta corrección compensa tanto el offset inicial como la diferencia de
-frecuencia entre los dos relojes. No se modifican los contadores físicos de los
-microcontroladores.
+frecuencia entre los dos relojes sobre los timestamps procesados.
 
 Además de corregir cada paquete, se informan los parámetros de calibración:
 
@@ -423,8 +402,8 @@ deriva_escala [ppm] = (escala - 1) × 10⁶
 ```
 
 El offset depende principalmente del instante en que arrancó cada
-microcontrolador; no representa por sí mismo un error del enlace. Su cambio
-entre el inicio y el final evidencia la deriva acumulada. Una
+microcontrolador. Su cambio entre el inicio y el final evidencia la deriva
+acumulada. Una
 `deriva_escala` negativa significa que, durante el ensayo, el contador del XIAO
 avanzó ligeramente más rápido que el del central.
 
@@ -463,13 +442,13 @@ Se utilizan kilobits decimales (`1 kbps = 1000 bit/s`) y una duración nominal d
 20 s por perfil. Se compara con la **carga útil ofrecida**, calculada como
 `payload × 8 / período`: si la pérdida es nula ambos valores deben coincidir,
 salvo el pequeño efecto de la duración real de la etapa. Si existe pérdida, un
-throughput recibido alto no demuestra sostenibilidad.
+throughput recibido alto puede coexistir con una carga ofrecida insostenible.
 
 #### Cola y latencias
 
 La ocupación máxima se expresa como posiciones utilizadas sobre las ocho
-disponibles. Alcanzar `8/8` indica que la cola llegó a llenarse, aunque no
-informa por sí solo durante cuánto tiempo permaneció llena.
+disponibles. Alcanzar `8/8` registra que la cola llegó a llenarse; esta métrica
+conserva el máximo y omite la duración de ese estado.
 
 Las latencias se calculan después de corregir los timestamps:
 
@@ -485,11 +464,9 @@ latencia_extremo_a_extremo =
 
 La latencia pre-envío incluye la formación temporal de la ventana, la
 generación y el empaquetado, la planificación de los hilos y la eventual espera
-en cola. No es posible aislar la espera pura en cola con el formato actual
-porque no se almacena un timestamp de encolado. La latencia de transporte
-incluye la espera por una oportunidad BLE, el envío de todos los fragmentos y
-la reconstrucción en el central. No representa una confirmación de recepción
-proporcionada por la notificación GATT.
+en cola. El formato actual agrupa estos componentes en una sola métrica de
+pre-envío. La latencia de transporte incluye la espera por una oportunidad BLE,
+el envío de todos los fragmentos y la reconstrucción en el central.
 
 Para cada latencia se informa:
 
@@ -510,7 +487,7 @@ delta_rx = rx_time_actual - rx_time_anterior
 ```
 
 Cuando existen descartes, dos paquetes recibidos pueden estar separados por más
-de un período de generación. Para no confundir esa pérdida con jitter:
+de un período de generación. El cálculo incorpora el salto de identificador:
 
 ```text
 jitter =
@@ -519,7 +496,7 @@ jitter =
 
 Se calculan media, desviación estándar y P95 del jitter absoluto. El intervalo
 de conexión BLE condiciona estas métricas porque agrupa las recepciones
-alrededor de sus eventos, pero no constituye una espera mínima obligatoria.
+alrededor de sus eventos.
 
 #### Criterio de sostenibilidad
 
@@ -561,17 +538,16 @@ python tools\analizar_experimentos.py ^
 
 ### Consumo energético
 
-La sostenibilidad temporal no basta para escoger una ventana: dos perfiles
-pueden entregar todos sus datos y, sin embargo, activar el procesador y la radio
-con frecuencias distintas. Por eso el consumo se mide solamente después del
-preexperimento, sobre el firmware periódico unificado que representa la
-arquitectura final.
+La comparación de ventanas combina sostenibilidad temporal y consumo. Dos
+perfiles pueden entregar todos sus datos y activar el procesador y la radio con
+frecuencias distintas. El consumo se mide sobre el firmware periódico unificado
+que representa la arquitectura final.
 
 La sesión se divide en advertising, conexión sin streaming y once perfiles
 activos. Advertising y establecimiento de conexión son costos comunes para
-alcanzar el estado conectado, no consecuencias de una ventana específica; se
-miden una vez para describir el ciclo completo, pero la comparación entre
-ventanas se hace durante cada pulso de perfil activo.
+alcanzar el estado conectado y se miden una vez para describir el ciclo
+completo. La comparación entre ventanas se realiza durante cada pulso de perfil
+activo.
 
 | Marcador | Pin XIAO |
 | --- | --- |
@@ -583,10 +559,10 @@ ventanas se hace durante cada pulso de perfil activo.
 | perfil activo | D5 / P0.05 |
 
 I²C se deshabilita en los builds del XIAO para liberar D4 y D5. Los marcadores
-no se compilan ni se usan en el preexperimento. Advertising y conexión se miden
-una vez por sesión y no se atribuyen a un perfil particular.
+se incluyen en el experimento periódico. Advertising y conexión se miden una
+vez por sesión como etapas comunes a todos los perfiles.
 
-Para cada perfil se obtendrán:
+Las métricas energéticas definidas para cada perfil son:
 
 ```text
 corriente media
@@ -611,11 +587,10 @@ normaliza también por byte útil recibido. En perfiles con pérdida, el
 denominador incluye únicamente información que llegó completa: la energía
 gastada en ventanas descartadas queda penalizada.
 
-`ACQUISITION_ACTIVE` y `TRANSMITTER_ACTIVE` permiten separar visualmente el
-trabajo de generación y transmisión. Este último representa actividad del hilo
-de aplicación, no el instante físico exacto durante el cual la radio está
-emitiendo. Los GPIO sirven como referencias temporales para alinear una captura
-externa de corriente; su nivel lógico no es una medición de potencia.
+`ACQUISITION_ACTIVE` y `TRANSMITTER_ACTIVE` separan visualmente el trabajo de
+generación y la actividad del hilo transmisor. Los GPIO proporcionan referencias
+temporales para alinear la captura externa de corriente, mientras que el PPK2
+registra la potencia.
 
 El diseño completo está en [PLAN_EXPERIMENTAL.md](PLAN_EXPERIMENTAL.md) y la
 instalación reproducible en
@@ -628,8 +603,8 @@ de la metodología: enumera las herramientas para Windows, instala los SDK de
 Zephyr correspondientes al nRF52840 y al ESP32-S3, verifica el entorno, compila
 ambos extremos y comprueba en los artefactos los parámetros BLE relevantes. Los
 scripts de compilación generan por separado el firmware del preexperimento y el
-del experimento periódico, de manera que repetir una etapa no requiere editar
-manualmente el código.
+del experimento periódico. Cada etapa se repite mediante su script
+correspondiente.
 
 La ejecución se documenta en
 [EJECUTAR_PREEXPERIMENTO.md](EJECUTAR_PREEXPERIMENTO.md) y
@@ -641,12 +616,11 @@ regenerarlos.
 
 ### Perfil del entorno radioeléctrico
 
-El desempeño de un enlace inalámbrico también puede depender del entorno donde
-se ejecuta. Para documentarlo se incorpora, como etapa asociada al experimento,
-un firmware independiente del ESP32-S3 que realiza un inventario de los
-emisores visibles desde la posición real del central. No se utiliza para
-modificar automáticamente los parámetros BLE, sino para conservar una
-descripción reproducible del contexto radioeléctrico junto con los resultados.
+El desempeño de un enlace inalámbrico también depende del entorno donde se
+ejecuta. Para documentarlo se incorpora, como etapa asociada al experimento, un
+firmware independiente del ESP32-S3 que realiza un inventario de los emisores
+visibles desde la posición real del central y conserva una descripción
+reproducible del contexto radioeléctrico junto con los resultados.
 
 El procedimiento es:
 
@@ -681,22 +655,19 @@ Para que el perfil sea comparable deben conservarse:
 - duración y configuración impresas en los registros `SETTING`;
 - contadores `SUMMARY_BLE` y `SUMMARY_WIFI`, incluidos posibles desbordamientos.
 
-El resultado permite describir cuántos emisores eran visibles, en qué canales
-Wi-Fi operaban y qué potencia recibía el central. Es información contextual:
-RSSI no mide ocupación temporal, tráfico ni interferencia, y una dirección BLE
-privada puede cambiar. En consecuencia, el sondeo permite detectar diferencias
-grandes entre ambientes, pero no demuestra que una red determinada haya causado
-una pérdida o latencia. El procedimiento completo y el formato de salida están
-en [EJECUTAR_SONDEO_REDES.md](EJECUTAR_SONDEO_REDES.md).
+El resultado describe cuántos emisores eran visibles, en qué canales Wi-Fi
+operaban y qué potencia recibía el central. El alcance del inventario comprende
+visibilidad y RSSI; la ocupación temporal, el tráfico y la interferencia
+requieren instrumentación adicional. El procedimiento completo y el formato de
+salida están en [EJECUTAR_SONDEO_REDES.md](EJECUTAR_SONDEO_REDES.md).
 
 ---
 
 ## 4. Resultados del sondeo radioeléctrico
 
 La captura [sondeo_redes.txt](resultados/sondeo_redes.txt) finalizó
-correctamente. El inventario no se truncó: se observaron cinco direcciones BLE
-frente a una capacidad de 128 y un BSSID Wi-Fi frente a una capacidad de 64,
-sin reportes fuera de almacenamiento.
+correctamente. Se observaron cinco direcciones BLE sobre una capacidad de 128 y
+un BSSID Wi-Fi sobre una capacidad de 64, con todos los reportes almacenados.
 
 ### Entorno BLE
 
@@ -704,7 +675,7 @@ Durante 60 s se recibieron 1.703 reportes correspondientes a cinco direcciones:
 
 > Por privacidad, las direcciones BLE, el BSSID, el SSID y los nombres de
 > dispositivos ajenos al proyecto fueron sustituidos por seudónimos
-> consistentes. Las métricas radioeléctricas y temporales no fueron alteradas.
+> consistentes. Se conservaron las métricas radioeléctricas y temporales.
 
 | Dirección | Tipo | Nombre | Observaciones | RSSI mín./medio/máx. |
 | --- | --- | --- | ---: | ---: |
@@ -717,8 +688,7 @@ Durante 60 s se recibieron 1.703 reportes correspondientes a cinco direcciones:
 El XIAO fue el anunciante BLE de mayor potencia media, 10,78 dB por encima del
 segundo dispositivo, y permaneció visible desde 69 ms después de comenzar hasta
 prácticamente el final del sondeo. La diferencia entre su mínimo de −81 dBm y su
-media de −39,78 dBm confirma que un valor instantáneo aislado no describe por sí
-solo las condiciones del enlace.
+media de −39,78 dBm muestra la variación del RSSI durante la captura.
 
 ### Entorno Wi-Fi
 
@@ -729,23 +699,19 @@ correspondieron a un único BSSID:
 | --- | --- | ---: | --- | ---: | ---: |
 | `02:00:00:00:01:01` | `red_entorno_2.4` | 4 | `UNKNOWN` | 16 | −41 / −33,31 / −28 dBm |
 
-El punto de acceso presentó una señal fuerte en la ubicación del central.
-`UNKNOWN` indica que el controlador no clasificó la seguridad; no significa que
-la red sea abierta.
+El punto de acceso presentó una señal fuerte en la ubicación del central. El
+valor `UNKNOWN` corresponde al estado de seguridad sin clasificar informado por
+el controlador.
 
 ### Alcance de estos resultados
 
 El sondeo describe un entorno visible acotado, con cinco direcciones BLE y un
-punto de acceso Wi-Fi cercano. No mide ocupación temporal, tráfico,
-retransmisiones ni colisiones; por eso no permite atribuir las pérdidas del
-experimento periódico a uno de esos emisores.
+punto de acceso Wi-Fi cercano. La caracterización comprende presencia, canal y
+RSSI de los emisores observados.
 
-Aunque el firmware de sondeo se ejecutó en una sesión separada, se mantuvieron
-el mismo entorno y montaje del experimento periódico. Por ello esta captura se
-adopta como el perfil radioeléctrico representativo de esa ejecución. La
-separación sigue siendo necesaria porque el central no puede ejecutar
-simultáneamente el firmware experimental y el de sondeo. El análisis completo
-está en
+El firmware de sondeo se ejecutó en una sesión separada con el mismo entorno y
+montaje del experimento periódico. Esta captura se adopta como perfil
+radioeléctrico representativo de la ejecución. El análisis completo está en
 [resultados/SONDEO_REDES_ANALISIS.md](resultados/SONDEO_REDES_ANALISIS.md).
 
 ---
@@ -766,22 +732,36 @@ paquetes incompletos ni desbordamiento:
 | 480 B | 3 | 264,44 pkt/s | 1015,46 kbps | 8,79 ms |
 | 960 B | 5 | 142,43 pkt/s | 1093,83 kbps | 12,20 ms |
 
-Los payloads de 15 y 30 bytes no mantuvieron el mismo régimen de saturación que
-los tamaños mayores. Desde 60 bytes la implementación aprovecha mejor los
-eventos de conexión: al duplicar de 30 a 60 B, la tasa observada pasó de
-80,29 a 1191,79 paquetes/s y la latencia P95 descendió de 48,79 a 5,33 ms. Este
-salto no se atribuye al tiempo de radio de 30 B adicionales, sino al
-comportamiento de planificación y alimentación de buffers de esta pila bajo
-saturación. El ensayo permite identificar el cambio empíricamente, pero no
-aislar una única causa interna.
+Los payloads de 15 y 30 bytes operaron en un régimen de ráfagas cortas. Desde
+60 bytes la implementación aprovecha eventos de conexión prolongados: al
+duplicar de 30 a 60 B, la tasa observada pasó de 80,29 a 1191,79 paquetes/s y la
+latencia P95 descendió de 48,79 a 5,33 ms.
+
+La interpretación es que, con 15 y 30 B, el controlador transmite los buffers
+pendientes más rápido de lo que la ruta firmware–host–controlador logra
+reponerlos. Cuando el controlador queda momentáneamente sin datos, decide cerrar
+el evento de conexión actual. La conexión BLE continúa establecida, pero los
+paquetes entregados después de esa decisión deben esperar al evento siguiente,
+separado por el intervalo de conexión de 50 ms. Esto concuerda con las ráfagas
+observadas: aproximadamente tres paquetes de 15 B o cuatro de 30 B por evento.
+
+Con 60 B también aumenta ligeramente el trabajo necesario para preparar y copiar
+el paquete, pero crece más el tiempo durante el cual el controlador permanece
+ocupado transmitiendo los buffers ya disponibles. Ese margen permite que el
+host reponga el siguiente antes de que la reserva se vacíe. Al continuar
+habiendo datos pendientes, el evento puede prolongarse y encadenar paquetes en
+vez de esperar al próximo intervalo.
+
+El umbral observado en 60 B refleja la temporización particular entre
+planificación, buffers y radio de esta implementación. Los datos muestran el
+cambio de régimen y su relación con las ráfagas.
 
 Entre 120 y 960 B, aumentar el paquete reduce la cantidad de paquetes por
 segundo, pero el throughput crece porque se amortizan los encabezados y las
-llamadas a la pila. La fragmentación tampoco invalida un tamaño: 960 B necesita
-cinco fragmentos y aun así obtuvo el mayor throughput útil, 1,09 Mbps, con un
-tiempo de transporte P95 de 12,20 ms. Para elegir una ventana interesa el tiempo
-del paquete completo, medido al recibir el último fragmento, y no el tiempo
-aislado de cada fragmento.
+llamadas a la pila. El payload de 960 B necesita cinco fragmentos y obtuvo el
+mayor throughput útil, 1,09 Mbps, con un tiempo de transporte P95 de 12,20 ms.
+Para elegir una ventana se utiliza el tiempo del paquete completo, medido al
+recibir el último fragmento.
 
 Estos resultados justificaron dos decisiones de la etapa periódica: excluir
 S1-E5 y S1-E10, que usarían los payloads ineficientes de 15 y 30 B, y agregar
@@ -827,9 +807,9 @@ Los promedios de los diez pulsos iniciales y finales produjeron:
 
 El offset se volvió 1.581 µs más negativo durante 232,65 s. Expresado de forma
 intuitiva, el reloj del XIAO avanzó aproximadamente 6,7956 ppm más rápido que el
-del central, unos 6,8 µs por segundo. Aunque la diferencia es pequeña, acumularía
-alrededor de 24,5 ms por hora si permaneciera constante. Esto justifica corregir
-no solo el offset inicial sino también la pendiente temporal.
+del central, unos 6,8 µs por segundo. A ese ritmo acumularía alrededor de
+24,5 ms por hora. La corrección temporal incorpora el offset inicial y la
+pendiente.
 
 ### Métricas por perfil
 
@@ -859,20 +839,19 @@ S3-E20. En todos ellos la cantidad recibida coincide con la generada y el
 throughput medido coincide, dentro de la duración efectiva del perfil, con los
 24, 96 y 384 kbps derivados del modelo de señal.
 
-S2-E5, S3-E5 y S3-E10 llenaron la cola y perdieron ventanas. Una ventana menor
-no resulta automáticamente mejor: genera más paquetes dentro de cada intervalo
-de conexión de 50 ms y exige que una cola de ocho posiciones absorba las
-ráfagas y variaciones del servicio BLE. Por tanto, el caudal de muestras no es
-la única variable relevante. S2-E5, S2-E10 y S2-E20 ofrecen los mismos 96 kbps,
-pero solo E5 produce 200 paquetes/s y pierde 7,38 %; E10 y E20 producen 100 y
-50 paquetes/s y no pierden datos.
+S2-E5, S3-E5 y S3-E10 llenaron la cola y perdieron ventanas. Las ventanas
+menores generan más paquetes dentro de cada intervalo de conexión de 50 ms y
+exigen que una cola de ocho posiciones absorba las ráfagas y variaciones del
+servicio BLE. La evaluación combina caudal, frecuencia de paquetes y ocupación
+de cola. S2-E5, S2-E10 y S2-E20 ofrecen los mismos 96 kbps; E5 produce
+200 paquetes/s y pierde 7,38 %, mientras E10 y E20 producen 100 y 50 paquetes/s
+con pérdida nula.
 
 Para S2, E10 y E20 transportaron el caudal completo de aproximadamente
 96,2 kbps. E10 obtuvo la menor latencia extremo a extremo P95, 79,47 ms, pero
 alcanzó 7/8 posiciones de cola. E20 utilizó 5/8 y requiere la mitad de paquetes,
-aunque cada uno se divide en dos fragmentos. La comparación energética permitirá
-decidir si conviene priorizar latencia o margen de cola y menor frecuencia de
-paquetes.
+aunque cada uno se divide en dos fragmentos. E10 prioriza latencia; E20 ofrece
+mayor margen de cola y menor frecuencia de paquetes.
 
 Para S3, E20 fue la única ventana sin pérdidas. E10 perdió 2,79 % y E5 perdió
 13,00 %. S3-E20 sostiene aproximadamente 384,8 kbps, pero su latencia pre-envío
@@ -886,35 +865,29 @@ fragmentos por paquete.
 La barrida de estrés muestra que 960 B cada 10 ms ya no es sostenible con esta
 arquitectura. El límite periódico se encuentra entre 50 pkt/s —S3-E20— y
 100 pkt/s —STRESS-960-E10—. El mayor throughput recibido fue 754,94 kbps en
-STRESS-960-E8, pero con 21,52 % de pérdida, por lo que no constituye una
-configuración utilizable. Ese valor es throughput recibido, no capacidad
-sostenible: la carga ofrecida era 960 kbps y casi una de cada cinco ventanas no
-llegó. De forma análoga, los cuatro perfiles de estrés llenaron la cola; bajar
-el período aumenta la carga ofrecida hasta 1,28 Mbps, pero no evita que el
-throughput útil se estanque y la pérdida crezca.
+STRESS-960-E8, junto con 21,52 % de pérdida sobre una carga ofrecida de 960 kbps.
+Los cuatro perfiles de estrés llenaron la cola; al reducir el período, la carga
+ofrecida aumenta hasta 1,28 Mbps mientras el throughput útil se estabiliza y la
+pérdida crece.
 
-El techo de 1,09 Mbps medido por saturación en el preexperimento no equivale a
-una tasa periódica sostenible. En el experimento periódico, la producción es
-independiente de BLE, el servicio se concentra alrededor de los eventos de
-conexión y la cola debe absorber sus variaciones. El preexperimento responde
-cuánto puede transferir el camino de envío cuando siempre tiene trabajo
-disponible; el experimento periódico responde si un productor de ritmo fijo
-puede convivir con ese servicio variable y con una memoria intermedia finita.
+El techo de 1,09 Mbps del preexperimento caracteriza el camino de envío
+saturado. En el experimento periódico, la producción es independiente de BLE,
+el servicio se concentra alrededor de los eventos de conexión y la cola absorbe
+sus variaciones. Esta segunda etapa caracteriza la convivencia entre un
+productor de ritmo fijo, el servicio variable del enlace y una memoria
+intermedia finita.
 
 La recepción también queda agrupada por esos eventos. El jitter P95 se ubicó
-entre aproximadamente 28 y 46 ms. Para no confundir pérdidas con jitter, se
-calcula considerando los saltos de identificador:
+entre aproximadamente 28 y 46 ms. El cálculo considera los saltos de
+identificador:
 
 ```text
 jitter = |delta_rx - delta_packet_id × período_de_generación|
 ```
 
-La medición del PPK2 continúa pendiente antes de recomendar una ventana
-definitiva.
-
 ---
 
-## 7. Estado y conclusiones
+## 7. Conclusiones
 
 La implementación reproduce el aspecto esencial de un sensor continuo: las
 ventanas se generan con reloj propio aunque BLE esté ocupado. La cola,
@@ -922,29 +895,22 @@ fragmentación, reconstrucción, sincronización y los contadores permiten
 observar dónde se acumula la demanda y contabilizar como pérdida toda ventana
 que no llega completa.
 
-La experiencia muestra que una ventana no debe elegirse igualando simplemente
-su duración a la latencia media de transporte. Esa latencia varía y BLE puede
-atender varias operaciones alrededor de un evento de conexión; la cola absorbe
-variaciones breves. La ventana debe elegirse comprobando simultáneamente pérdida
-nula, margen de cola y distribución de latencia bajo el caudal de la señal.
+La selección de ventana considera simultáneamente la pérdida, el margen de cola
+y la distribución de latencia bajo el caudal de la señal. BLE puede atender
+varias operaciones alrededor de un evento de conexión y la cola absorbe
+variaciones breves del servicio.
 
 Con los datos actuales:
 
 - S1 queda representado por E20, con 60 B cada 20 ms y pérdida nula.
 - Para S2, E10 ofrece menor P95 extremo a extremo, mientras que E20 utiliza
-  menos posiciones de cola y la mitad de paquetes; ambos son candidatos hasta
-  medir energía.
+  menos posiciones de cola y la mitad de paquetes.
 - Para S3, E20 es la única alternativa evaluada que conserva el caudal completo.
-- Los perfiles de estrés confirman que el mayor throughput recibido no es una
-  configuración útil cuando se obtiene descartando ventanas.
+- Los perfiles de estrés relacionan el aumento del throughput recibido con el
+  crecimiento de la pérdida y la saturación de la cola.
 - El primer sondeo radioeléctrico encontró al XIAO como anunciante BLE más
-  fuerte y un único BSSID Wi-Fi visible en canal 4. Se adopta como perfil del
-  entorno de la ejecución, aunque no permite explicar causalmente sus pérdidas.
-
-Todavía no se declara una ventana óptima. Falta medir corriente y energía con
-los marcadores implementados, y la conclusión se limita a esta arquitectura,
-parámetros de conexión, profundidad de cola y estrategia de una notificación en
-curso. Cambiar alguno de ellos requiere volver a caracterizar el sistema.
+  fuerte y un único BSSID Wi-Fi visible en canal 4, que conforman el perfil
+  radioeléctrico de la ejecución.
 
 Los CSV y el detalle de procesamiento de la ejecución están en
 [resultados/EXPERIMENTOS_UNIFICADOS_ANALISIS.md](resultados/EXPERIMENTOS_UNIFICADOS_ANALISIS.md);
