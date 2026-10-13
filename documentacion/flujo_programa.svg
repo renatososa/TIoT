@@ -1,0 +1,65 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 740" role="img" aria-labelledby="titulo descripcion">
+  <title id="titulo">Lógica del programa con enventanado temporal</title>
+  <desc id="descripcion">El hilo de secuencia controla el perfil. Durante 20 segundos, el hilo productor genera ventanas cada W milisegundos y las coloca en una cola de ocho posiciones. En paralelo, el hilo transmisor extrae las ventanas, las fragmenta y las envía por BLE al ESP32-S3.</desc>
+  <defs>
+    <marker id="flecha" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="9" markerHeight="9" orient="auto-start-reverse">
+      <path d="M 1 1 L 9 5 L 1 9 Z" fill="#385a78"/>
+    </marker>
+    <style>
+      text { font-family: Arial, Helvetica, sans-serif; fill: #17324d; }
+      .titulo { font-size: 31px; font-weight: 700; }
+      .seccion { font-size: 23px; font-weight: 700; }
+      .paso { font-size: 20px; }
+      .nota { font-size: 18px; fill: #385a78; }
+      .etiqueta { font-size: 19px; font-weight: 700; fill: #28517a; }
+      .borde { stroke-width: 2; }
+    </style>
+  </defs>
+
+  <rect x="0" y="0" width="1200" height="740" fill="#ffffff"/>
+  <text x="45" y="48" class="titulo">Lógica del programa con enventanado temporal</text>
+
+  <rect x="45" y="72" width="1110" height="135" rx="16" fill="#eef3fb" stroke="#6087b7" class="borde"/>
+  <text x="72" y="106" class="seccion">Hilo de secuencia · XIAO</text>
+  <rect x="72" y="126" width="299" height="53" rx="10" fill="#ffffff" stroke="#aec2da"/>
+  <text x="90" y="159" class="paso">Inicia perfil y temporizador</text>
+  <line x1="381" y1="152" x2="427" y2="152" stroke="#385a78" stroke-width="3" marker-end="url(#flecha)"/>
+  <rect x="438" y="126" width="212" height="53" rx="10" fill="#ffffff" stroke="#aec2da"/>
+  <text x="465" y="159" class="paso">Mantiene 20 s</text>
+  <line x1="661" y1="152" x2="705" y2="152" stroke="#385a78" stroke-width="3" marker-end="url(#flecha)"/>
+  <rect x="716" y="126" width="411" height="53" rx="10" fill="#ffffff" stroke="#aec2da"/>
+  <text x="739" y="159" class="paso">Detiene y vacía los pendientes</text>
+
+  <text x="45" y="246" class="nota">Temporizador de Zephyr: avisa al productor cada W ms; no es un hilo.</text>
+  <text x="45" y="289" class="etiqueta">DURANTE EL PERFIL, ESTOS DOS HILOS TRABAJAN EN PARALELO</text>
+
+  <rect x="45" y="311" width="345" height="291" rx="16" fill="#eef6ff" stroke="#6e9bc5" class="borde"/>
+  <rect x="45" y="311" width="345" height="56" rx="16" fill="#d9eafa"/>
+  <rect x="45" y="348" width="345" height="19" fill="#d9eafa"/>
+  <text x="66" y="348" class="seccion">Hilo productor · XIAO</text>
+  <text x="66" y="405" class="paso">1. Recibe aviso cada W ms</text>
+  <text x="66" y="452" class="paso">2. Genera ventana sintética</text>
+  <text x="66" y="499" class="paso">3. Encola o cuenta descarte</text>
+  <text x="66" y="562" class="nota">Repite cada W ms</text>
+
+  <rect x="435" y="403" width="170" height="111" rx="16" fill="#fff5df" stroke="#c49b4c" class="borde"/>
+  <text x="520" y="445" class="seccion" text-anchor="middle">Cola</text>
+  <text x="520" y="476" class="nota" text-anchor="middle">Hasta 8 ventanas</text>
+  <line x1="392" y1="459" x2="424" y2="459" stroke="#385a78" stroke-width="3" marker-end="url(#flecha)"/>
+  <line x1="608" y1="459" x2="639" y2="459" stroke="#385a78" stroke-width="3" marker-end="url(#flecha)"/>
+
+  <rect x="650" y="311" width="505" height="291" rx="16" fill="#eaf7f1" stroke="#6aa68b" class="borde"/>
+  <rect x="650" y="311" width="505" height="56" rx="16" fill="#d6eee1"/>
+  <rect x="650" y="348" width="505" height="19" fill="#d6eee1"/>
+  <text x="672" y="348" class="seccion">Hilo transmisor · XIAO</text>
+  <text x="672" y="405" class="paso">1. Toma una ventana de la cola</text>
+  <text x="672" y="449" class="paso">2. Fragmenta y añade 32 B de encabezado</text>
+  <text x="692" y="475" class="paso">a cada fragmento</text>
+  <text x="672" y="522" class="paso">3. Envía los fragmentos por BLE</text>
+  <text x="672" y="562" class="nota">Repite mientras haya ventanas</text>
+
+  <line x1="902" y1="605" x2="902" y2="628" stroke="#385a78" stroke-width="3" marker-end="url(#flecha)"/>
+  <rect x="650" y="640" width="505" height="73" rx="14" fill="#f0f2f5" stroke="#8c9cad" class="borde"/>
+  <text x="672" y="669" class="seccion">ESP32-S3 · central BLE</text>
+  <text x="672" y="697" class="nota">Valida fragmentos y registra cada ventana completa.</text>
+</svg>

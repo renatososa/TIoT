@@ -54,7 +54,7 @@ sensores corporales. Esta posibilidad permite observar varias zonas a la vez,
 pero suma tráfico y puede exigir sincronizar las mediciones entre sensores
 ([sistema de monitoreo con varios nodos sEMG](https://pmc.ncbi.nlm.nih.gov/articles/PMC6245594/)).
 
-![Esquema de una red corporal con sensores EMG sobre distintos músculos que transmiten por BLE a un dispositivo cercano](body_sensor_network.png)
+![Esquema de una red corporal con sensores EMG sobre distintos músculos que transmiten por BLE a un dispositivo cercano](documentacion/body_sensor_network.png)
 
 **Figura 1.** Ilustración generada con IA de una posible red de sensores
 corporales. Muestra el monitoreo simultáneo de varios músculos; el montaje de
@@ -105,7 +105,7 @@ algoritmo de análisis. Tampoco se ensaya aquí una red con varios sensores sobr
 un mismo sujeto: ese escenario motiva el estudio, pero requiere una evaluación
 específica.
 
-![Diagrama de comunicación BLE entre el XIAO nRF52840 como periférico y el ESP32-S3 como central](<Comunicación BLE entre XIAO y ESP32-S3.png>)
+![Diagrama de comunicación BLE entre el XIAO nRF52840 como periférico y el ESP32-S3 como central](<documentacion/Comunicación BLE entre XIAO y ESP32-S3.png>)
 
 **Figura 2.** Diagrama generado con IA de los roles y el sentido de la
 comunicación BLE en el montaje experimental. El XIAO envía datos tipo EMG
@@ -131,12 +131,12 @@ de envío.
 
 | Ruta | Contenido |
 | --- | --- |
-| [`periferico/peripherial_min/`](../periferico/peripherial_min/) | Programa (firmware) del XIAO nRF52840 |
-| [`central/central_min/`](../central/central_min/) | Firmware del ESP32-S3 central |
-| [`common/`](../common/) | Protocolo binario compartido |
-| [`tools/`](../tools/) | Captura serie, corrección temporal y análisis |
-| [`firmware/`](../firmware/) | Binarios compilados y scripts de grabación |
-| [`resultados/`](../resultados/) | Capturas, tablas de datos (CSV) e informes derivados |
+| [`periferico/peripherial_min/`](periferico/peripherial_min/) | Programa (firmware) del XIAO nRF52840 |
+| [`central/central_min/`](central/central_min/) | Firmware del ESP32-S3 central |
+| [`common/`](common/) | Protocolo binario compartido |
+| [`tools/`](tools/) | Captura serie, corrección temporal y análisis |
+| [`firmware/`](firmware/) | Binarios compilados y scripts de grabación |
+| [`resultados/`](resultados/) | Capturas, tablas de datos (CSV) e informes derivados |
 
 ---
 
@@ -304,7 +304,7 @@ es `bt_gatt_notify_cb()`.
 | **`send_packet()`** | Agrega el encabezado experimental a cada fragmento y llama a **`custom_gatt_send()`**. |
 | **`custom_gatt_send()`** | Encapsula `bt_gatt_notify_cb()`, la llamada de la biblioteca BLE de Zephyr, y espera el aviso local de finalización antes de enviar el siguiente fragmento. |
 
-![Esquema de los tres hilos del XIAO: secuencia, productor y transmisor, con una cola compartida y recepción en el ESP32-S3](flujo_programa.svg)
+![Esquema de los tres hilos del XIAO: secuencia, productor y transmisor, con una cola compartida y recepción en el ESP32-S3](documentacion/flujo_programa.svg)
 
 **Figura 3.** El hilo de secuencia controla el perfil. Durante sus 20 s, el hilo
 productor genera ventanas cada `W ms` y el transmisor toma las disponibles en la
@@ -335,9 +335,9 @@ Esta separación se usa en el **experimento principal**. En el preexperimento de
 saturación, un único hilo genera y envía paquetes tan rápido como puede, sin
 temporizador ni cola de paquetes generados por temporizador. Las funciones y sus
 implementaciones están en
-[`postexperiment.c`](../periferico/peripherial_min/src/postexperiment.c),
-[`preexperiment.c`](../periferico/peripherial_min/src/preexperiment.c) y
-[`experiment_receiver.c`](../central/central_min/src/experiment_receiver.c).
+[`postexperiment.c`](periferico/peripherial_min/src/postexperiment.c),
+[`preexperiment.c`](periferico/peripherial_min/src/preexperiment.c) y
+[`experiment_receiver.c`](central/central_min/src/experiment_receiver.c).
 
 ### Etapa 2: experimento principal con enventanado temporal
 
@@ -393,7 +393,7 @@ encabezados y cuenta los fragmentos y bytes recibidos; no vuelve a formar un
 arreglo de muestras ni analiza la señal EMG. La especificación completa de los
 identificadores (UUID), las características, propiedades, permisos y el formato
 binario está en
-[common/README.md](../common/README.md).
+[common/README.md](common/README.md).
 
 Los datos se envían mediante notificaciones GATT. A diferencia de una indicación,
 una notificación no espera una confirmación del protocolo de atributos de BLE
@@ -710,17 +710,17 @@ el marcador del transmisor incluye la espera del callback BLE y no equivale a
 tiempo de emisión de radio. Advertising, conexión y perfil sí quedaron
 delimitados por sus marcadores.
 
-El diseño completo está en [PLAN_EXPERIMENTAL.md](../PLAN_EXPERIMENTAL.md) y la
+El diseño completo está en [PLAN_EXPERIMENTAL.md](PLAN_EXPERIMENTAL.md) y la
 instalación reproducible en
-[GUIA_INSTALACION_WINDOWS.md](../GUIA_INSTALACION_WINDOWS.md).
+[GUIA_INSTALACION_WINDOWS.md](GUIA_INSTALACION_WINDOWS.md).
 El montaje, la captura simultánea y el procesamiento del PPK2 están en la
-[guía de consumo](../EJECUTAR_CONSUMO.md). La primera medición de corriente y su
+[guía de consumo](EJECUTAR_CONSUMO.md). La primera medición de corriente y su
 registro BLE simultáneo se analizan en
-[resultados/20261011/ANALISIS_CONSUMO.md](../resultados/20261011/ANALISIS_CONSUMO.md).
+[resultados/20261011/ANALISIS_CONSUMO.md](resultados/20261011/ANALISIS_CONSUMO.md).
 
 ### Reproducibilidad
 
-La [guía de instalación y compilación](../GUIA_INSTALACION_WINDOWS.md) forma parte
+La [guía de instalación y compilación](GUIA_INSTALACION_WINDOWS.md) forma parte
 de la metodología: enumera las herramientas para Windows, instala los SDK de
 Zephyr correspondientes al nRF52840 y al ESP32-S3, verifica el entorno, compila
 ambos extremos y comprueba en los artefactos los parámetros BLE relevantes. Los
@@ -729,8 +729,8 @@ enventanado y el del ensayo con enventanado. Cada etapa se repite mediante su
 script correspondiente.
 
 La ejecución se documenta en
-[EJECUTAR_PREEXPERIMENTO.md](../EJECUTAR_PREEXPERIMENTO.md) y
-[EJECUTAR_EXPERIMENTOS.md](../EJECUTAR_EXPERIMENTOS.md). La segunda guía incluye
+[EJECUTAR_PREEXPERIMENTO.md](EJECUTAR_PREEXPERIMENTO.md) y
+[EJECUTAR_EXPERIMENTOS.md](EJECUTAR_EXPERIMENTOS.md). La segunda guía incluye
 grabación, conexión del pulso de sincronización, captura del puerto serie y los
 comandos de corrección y análisis. Los binarios ya construidos se conservan en
 `firmware/`, mientras que los fuentes, configuraciones y scripts permiten
@@ -779,18 +779,18 @@ El resultado describe cuántos emisores eran visibles, en qué canales Wi-Fi
 operaban y qué potencia recibía el central. El alcance del inventario comprende
 visibilidad y RSSI; la ocupación temporal, el tráfico y la interferencia
 requieren instrumentación adicional. El procedimiento completo y el formato de
-salida están en [EJECUTAR_SONDEO_REDES.md](../EJECUTAR_SONDEO_REDES.md).
+salida están en [EJECUTAR_SONDEO_REDES.md](EJECUTAR_SONDEO_REDES.md).
 
 ---
 
 ## 4. Resultados del sondeo radioeléctrico
 
 Se realizó un nuevo sondeo en octubre. El archivo disponible,
-[sondeo_redes_10_2026.txt](../resultados/sondeo_redes_10_2026.txt), contiene una
+[sondeo_redes_10_2026.txt](resultados/sondeo_redes_10_2026.txt), contiene una
 sesión finalizada correctamente: cinco direcciones BLE sobre una capacidad de
 128 y un BSSID Wi-Fi sobre una capacidad de 64, con todos los reportes
 almacenados. Sin embargo, sus resultados coinciden exactamente con los del
-[archivo de julio](../resultados/sondeo_redes.txt); entre ambos registros solo
+[archivo de julio](resultados/sondeo_redes.txt); entre ambos registros solo
 cambia la fecha de compilación del firmware. Las cifras siguientes quedan
 pendientes de revisión contra el registro original del nuevo sondeo.
 
@@ -839,7 +839,7 @@ El archivo con sufijo `10_2026` registra una compilación del 11 de octubre de
 verificar las métricas del nuevo sondeo y las condiciones del montaje, estas
 cifras no se usan para caracterizar el entorno del ensayo de rendimiento y
 consumo ni para atribuir sus pérdidas a los emisores observados. El
-[análisis completo](../resultados/SONDEO_REDES_ANALISIS.md) detalla esa captura.
+[análisis completo](resultados/SONDEO_REDES_ANALISIS.md) detalla esa captura.
 
 ---
 
@@ -872,7 +872,7 @@ software no repone datos pendientes a tiempo para prolongar el evento de
 conexión. Con 60 B podría alcanzar a reponerlos durante el evento. Los registros
 del host no muestran directamente el estado de los controladores ni permiten
 confirmar esa secuencia causal; el detalle y las pruebas propuestas están en el
-[análisis del preexperimento](../resultados/PREEXPERIMENTO_01_ANALISIS.md).
+[análisis del preexperimento](resultados/PREEXPERIMENTO_01_ANALISIS.md).
 
 Entre 120 y 960 B, aumentar el paquete reduce la cantidad de paquetes por
 segundo, pero el throughput crece porque se amortizan los encabezados y las
@@ -1032,7 +1032,7 @@ datos mayor. STRESS-960-E6 alcanzó 9,260 mA de corriente media y perdió 14,97 
 de las ventanas; estos perfiles no representan una configuración de adquisición
 EMG y no se consideran candidatos para elegir la ventana.
 
-El [análisis completo](../resultados/20261011/ANALISIS_CONSUMO.md) detalla las
+El [análisis completo](resultados/20261011/ANALISIS_CONSUMO.md) detalla las
 once filas, la energía fuera de perfiles y el tratamiento de los valores `X`
 aislados en los cambios de marcadores. La medición abarca la placa XIAO completa,
 incluido el regulador de entrada. Faltan repeticiones para cuantificar la
