@@ -891,13 +891,6 @@ la mayor tasa de transmisión.
 
 ## 6. Resultados del experimento con enventanado temporal
 
-Los resultados de rendimiento y consumo de esta sección corresponden a la
-**misma ejecución**, registrada el 11 de octubre de 2026. El log BLE del central
-es `resultados/20261011/ble_central.txt`, copia conservada de
-`resultados/monitor_esp32.txt`; la corriente y los marcadores proceden del PPK2.
-La ejecución anterior sin PPK2 se conserva por separado en
-`resultados/EXPERIMENTOS_UNIFICADOS_ANALISIS.md`.
-
 ### Validez de la ejecución
 
 La sesión analizada utilizó intervalo de conexión de 50 ms, latencia de
