@@ -539,14 +539,16 @@ sin encabezados ATT, L2CAP, Link Layer ni el encabezado experimental:
 
 ```text
 throughput_útil (kbps) =
-    bytes_útiles_recibidos × 8 / duración_del_perfil / 1000
+    bytes_útiles_recibidos × 8
+    / (paquetes_generados × período_de_ventana_en_segundos) / 1000
 ```
 
-Se toma una duración nominal de 20 s por perfil. El resultado se compara con la
-**carga útil ofrecida**, calculada como
-`bytes_de_muestras × 8 / período_en_ms`: si la pérdida es nula ambos valores deben coincidir,
-salvo el pequeño efecto de la duración real de la etapa. Si existe pérdida, un
-throughput recibido alto puede coexistir con una carga ofrecida insostenible.
+Se normaliza por el tiempo que representan las ventanas generadas, porque cada
+etapa puede durar algo más de los 20 s configurados. El resultado se compara con
+la **carga útil ofrecida**, calculada como
+`bytes_de_muestras × 8 / período_en_ms`. Si la pérdida es nula, ambos valores
+coinciden; si hay descartes, el throughput recibido es menor. Un throughput
+recibido alto puede coexistir con una carga ofrecida insostenible.
 
 #### Cola y latencias
 
@@ -939,17 +941,17 @@ paquete. Las columnas de latencia muestran `media / P95`.
 
 | Perfil | Muestras por paquete | Ventana | Pérdida | Throughput útil | Cola máx. | Pre-envío media/P95 | Extremo a extremo media/P95 | Transporte media/P95 |
 | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
-| S1-E20 | 60 B | 20 ms | 0,00 % | 24,02 kbps | 0/8 | 30,71 / 39,56 ms | 56,76 / 79,67 ms | 26,05 / 47,76 ms |
-| S2-E5 | 60 B | 5 ms | 3,49 % | 92,86 kbps | 8/8 | 31,72 / 56,39 ms | 45,91 / 73,05 ms | 14,19 / 44,69 ms |
-| S2-E10 | 120 B | 10 ms | 0,00 % | 96,19 kbps | 6/8 | 23,88 / 36,20 ms | 45,37 / 66,48 ms | 21,49 / 44,90 ms |
-| S2-E20 | 240 B | 20 ms | 0,00 % | 96,19 kbps | 4/8 | 31,97 / 42,50 ms | 56,84 / 82,47 ms | 24,86 / 46,72 ms |
-| S3-E5 | 240 B | 5 ms | 0,62 % | 382,85 kbps | 8/8 | 24,74 / 41,52 ms | 33,84 / 51,42 ms | 9,10 / 31,27 ms |
-| S3-E10 | 480 B | 10 ms | 0,00 % | 384,96 kbps | 4/8 | 29,75 / 45,12 ms | 41,57 / 58,01 ms | 11,82 / 35,94 ms |
-| S3-E20 | 960 B | 20 ms | 0,00 % | 384,77 kbps | 5/8 | 37,14 / 49,93 ms | 56,97 / 72,87 ms | 19,84 / 42,68 ms |
-| STRESS-960-E10 | 960 B | 10 ms | 0,05 % | 770,30 kbps | 6/8 | 30,50 / 53,54 ms | 43,04 / 66,61 ms | 12,54 / 34,98 ms |
-| STRESS-960-E8 | 960 B | 8 ms | 0,08 % | 961,54 kbps | 8/8 | 53,03 / 84,64 ms | 64,03 / 95,84 ms | 11,00 / 12,77 ms |
-| STRESS-960-E7 | 960 B | 7 ms | 0,63 % | 1093,63 kbps | 8/8 | 49,43 / 103,73 ms | 59,60 / 114,18 ms | 10,17 / 12,38 ms |
-| STRESS-960-E6 | 960 B | 6 ms | 14,97 % | 1092,48 kbps | 8/8 | 80,09 / 98,91 ms | 90,45 / 109,25 ms | 10,36 / 12,38 ms |
+| S1-E20 | 60 B | 20 ms | 0,00 % | 24,00 kbps | 0/8 | 30,71 / 39,56 ms | 56,76 / 79,67 ms | 26,05 / 47,76 ms |
+| S2-E5 | 60 B | 5 ms | 3,49 % | 92,65 kbps | 8/8 | 31,72 / 56,39 ms | 45,91 / 73,05 ms | 14,19 / 44,69 ms |
+| S2-E10 | 120 B | 10 ms | 0,00 % | 96,00 kbps | 6/8 | 23,88 / 36,20 ms | 45,37 / 66,48 ms | 21,49 / 44,90 ms |
+| S2-E20 | 240 B | 20 ms | 0,00 % | 96,00 kbps | 4/8 | 31,97 / 42,50 ms | 56,84 / 82,47 ms | 24,86 / 46,72 ms |
+| S3-E5 | 240 B | 5 ms | 0,62 % | 381,61 kbps | 8/8 | 24,74 / 41,52 ms | 33,84 / 51,42 ms | 9,10 / 31,27 ms |
+| S3-E10 | 480 B | 10 ms | 0,00 % | 384,00 kbps | 4/8 | 29,75 / 45,12 ms | 41,57 / 58,01 ms | 11,82 / 35,94 ms |
+| S3-E20 | 960 B | 20 ms | 0,00 % | 384,00 kbps | 5/8 | 37,14 / 49,93 ms | 56,97 / 72,87 ms | 19,84 / 42,68 ms |
+| STRESS-960-E10 | 960 B | 10 ms | 0,05 % | 767,62 kbps | 6/8 | 30,50 / 53,54 ms | 43,04 / 66,61 ms | 12,54 / 34,98 ms |
+| STRESS-960-E8 | 960 B | 8 ms | 0,08 % | 959,23 kbps | 8/8 | 53,03 / 84,64 ms | 64,03 / 95,84 ms | 11,00 / 12,77 ms |
+| STRESS-960-E7 | 960 B | 7 ms | 0,63 % | 1090,25 kbps | 8/8 | 49,43 / 103,73 ms | 59,60 / 114,18 ms | 10,17 / 12,38 ms |
+| STRESS-960-E6 | 960 B | 6 ms | 14,97 % | 1088,34 kbps | 8/8 | 80,09 / 98,91 ms | 90,45 / 109,25 ms | 10,36 / 12,38 ms |
 
 ### Interpretación del rendimiento
 
@@ -971,9 +973,9 @@ notificaciones por ventana y E10 tres; la comparación energética de estas dos
 ventanas se presenta abajo.
 
 Los perfiles de estrés tuvieron pérdida: 0,05 % con E10, 0,08 % con E8,
-0,63 % con E7 y 14,97 % con E6. El throughput útil máximo fue 1093,63 kbps
+0,63 % con E7 y 14,97 % con E6. El throughput útil máximo fue 1090,25 kbps
 en E7. Al pasar de E7 a E6, la carga ofrecida subió de aproximadamente
-1097 a 1280 kbps, pero el throughput recibido permaneció cerca de 1093 kbps
+1097 a 1280 kbps, pero el throughput recibido permaneció cerca de 1090 kbps
 y aumentó la pérdida. E8, E7 y E6 llenaron la cola de ocho posiciones.
 
 El techo de aproximadamente 1090 kbps observado en el preexperimento es
